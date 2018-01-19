@@ -351,7 +351,7 @@ abstract class WebTestCase extends BaseWebTestCase
      *
      * @return null|AbstractExecutor
      */
-    protected function loadFixtures(array $classNames, $omName = null, $registryName = 'doctrine', $purgeMode = null)
+    protected function loadFixtures(array $classNames, $omName = null, $registryName = 'doctrine', $purgeMode = null, $append = false)
     {
         $container = $this->getContainer();
         /** @var ManagerRegistry $registry */
@@ -453,7 +453,9 @@ abstract class WebTestCase extends BaseWebTestCase
             }
 
             $executor->setReferenceRepository($referenceRepository);
-            $executor->purge();
+            if (false === $append) {
+                $executor->purge();
+            }
         }
 
         $loader = $this->getFixtureLoader($container, $classNames);
