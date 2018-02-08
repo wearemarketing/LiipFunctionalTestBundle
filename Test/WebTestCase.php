@@ -383,13 +383,15 @@ abstract class WebTestCase extends BaseWebTestCase
                     throw new \InvalidArgumentException("Connection does not contain a 'path' or 'dbname' parameter and cannot be dropped.");
                 }
 
-                if (!isset(self::$cachedMetadatas[$omName])) {
-                    self::$cachedMetadatas[$omName] = $om->getMetadataFactory()->getAllMetadata();
-                    usort(self::$cachedMetadatas[$omName], function ($a, $b) {
+                $kernel = $container->get('kernel');
+                $cacheKey = $this->environment.$omName.get_class($kernel);
+                if (!isset(self::$cachedMetadatas[$cacheKey])) {
+                    self::$cachedMetadatas[$cacheKey] = $om->getMetadataFactory()->getAllMetadata();
+                    usort(self::$cachedMetadatas[$cacheKey], function ($a, $b) {
                         return strcmp($a->name, $b->name);
                     });
                 }
-                $metadatas = self::$cachedMetadatas[$omName];
+                $metadatas = self::$cachedMetadatas[$cacheKey];
 
                 if ($container->getParameter('liip_functional_test.cache_sqlite_db')) {
                     $backup = $container->getParameter('kernel.cache_dir').'/test_'.md5(serialize($metadatas).serialize($classNames)).'.db';
@@ -418,9 +420,11 @@ abstract class WebTestCase extends BaseWebTestCase
 
                 // TODO: handle case when using persistent connections. Fail loudly?
                 $schemaTool = new SchemaTool($om);
-                $schemaTool->dropDatabase();
-                if (!empty($metadatas)) {
-                    $schemaTool->createSchema($metadatas);
+                if (false === $append) {
+                    $schemaTool->dropDatabase();
+                    if (!empty($metadatas)) {
+                        $schemaTool->createSchema($metadatas);
+                    }
                 }
                 $this->postFixtureSetup();
 
